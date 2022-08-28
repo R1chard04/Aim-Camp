@@ -3,16 +3,23 @@ package main;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.Random;
 
 import javax.swing.*;
 
 public class GamePanel extends JPanel implements Runnable{
 
+	private static final long serialVersionUID = 1L;
+	
 	static final int GAME_WIDTH = 1500;
 	static final int GAME_HEIGHT = 1000;
 	static final Dimension SCREEN_SIZE = new Dimension(GAME_WIDTH, GAME_HEIGHT);
+	int targetCounter = 0;
+	boolean running = true;
+	double startTime;
+	double endTime;
+	double totalTime;
+	double finalScore;
 	
 	Thread gameThread;
 	Image image;
@@ -38,7 +45,7 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	void newTarget() {
 		random = new Random();
-		target = new Target(random.nextDouble(1500), random.nextDouble(800), 20, 20);
+		target = new Target(random.nextDouble(1400), random.nextDouble(900), 20, 20);
 	}
 	public void paint(Graphics g) {
 		image = createImage(getWidth(),getHeight());
@@ -51,19 +58,13 @@ public class GamePanel extends JPanel implements Runnable{
 		target.draw(g);
 		player.draw(g);
 	}
-	
-	int counter = 0;
+
 	
 	void regenerateTarget() {
-		if (target.hasClicked && counter <= 10) {
+		if (target.hasClicked && targetCounter < 5) {
 			newTarget();
-			counter++;
-		}
-		else {
-			
-		}
-		
-	
+			targetCounter++;
+		} 
 	}
 	
 	@Override
@@ -77,7 +78,17 @@ public class GamePanel extends JPanel implements Runnable{
 			delta += (now -lastTime)/ns;
 			lastTime = now;
 			if(delta >=1) {
-				
+				if(targetCounter >= 5) {
+					endTime = System.nanoTime();
+					totalTime = endTime/1_000_000_000 - startTime/1_000_000_000;
+					finalScore = 1600 * Math.pow(Math.E, (-totalTime)/21.0) - 600.0;
+					delta = -100;
+					running = false;
+					return;
+				}
+				else if (targetCounter == 0) {
+					startTime = lastTime;
+				}
 				regenerateTarget();
 				repaint();
 				delta--;
@@ -89,10 +100,6 @@ public class GamePanel extends JPanel implements Runnable{
 	public class AL extends MouseAdapter {
 		public void mouseClicked(MouseEvent e) {
 			target.mouseClicked(e);
-		}
-		
-		public void mouseReleased(MouseEvent e) {
-			target.mouseReleased(e);
 		}
 	}
 		
